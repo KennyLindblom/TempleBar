@@ -1,0 +1,97 @@
+@model PubsApp.Models.DashboardViewModel
+@{
+    ViewData["Title"] = "Overview";
+    var maxSales = Math.Max(1m, Model.MonthlySales.Count == 0 ? 0 : Model.MonthlySales.Max(x => x.Revenue));
+    var maxCategory = Math.Max(1m, Model.TopCategories.Count == 0 ? 0 : Model.TopCategories.Max(x => x.Revenue));
+}
+
+<div class="page-heading">
+    <div><div class="eyebrow">Sales workspace</div><h1>Business overview</h1><p>Your Northwind operation, at a glance.</p></div>
+    <div class="range-label"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>@Model.SalesPeriod</div>
+</div>
+
+<section class="metric-grid" aria-label="Business metrics">
+    <article class="metric-card"><div class="metric-top"><span class="metric-label">Sales after discounts</span><span class="metric-icon purple"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20m5-16H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span></div><div class="metric-value">@Model.GrossSales.ToString("C0")</div><div class="metric-foot">Across all order line items</div></article>
+    <article class="metric-card"><div class="metric-top"><span class="metric-label">Orders</span><span class="metric-icon green"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v15H4zM8 3v4m8-4v4M4 10h16"/></svg></span></div><div class="metric-value">@Model.OrderCount.ToString("N0")</div><div class="metric-foot">@Model.CustomerCount.ToString("N0") customers on file</div></article>
+    <article class="metric-card"><div class="metric-top"><span class="metric-label">Average order value</span><span class="metric-icon orange"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17 9 11l4 4 8-9M15 6h6v6"/></svg></span></div><div class="metric-value">@Model.AverageOrderValue.ToString("C0")</div><div class="metric-foot">Sales after discounts ÷ orders</div></article>
+    <article class="metric-card"><div class="metric-top"><span class="metric-label">Low stock</span><span class="metric-icon rose"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2.8 20h18.4L12 3Z"/><path d="M12 9v5m0 3h.01"/></svg></span></div><div class="metric-value">@Model.LowStockCount</div><div class="metric-foot">Of @Model.ProductCount active products</div></article>
+</section>
+
+<section class="dashboard-grid">
+    <article class="panel">
+        <div class="panel-heading"><div><h2>Sales trend</h2><div class="panel-subtitle">Monthly sales after discounts</div></div><div class="chart-legend"><span class="legend-dot"></span>Sales</div></div>
+        <div class="sales-chart" role="img" aria-label="Monthly sales bar chart for @Model.SalesPeriod">
+            @if (Model.MonthlySales.Count == 0)
+            {
+                <div class="chart-empty">There is no order data for this period.</div>
+            }
+            else
+            {
+                <div class="chart-columns">
+                    @foreach (var month in Model.MonthlySales)
+                    {
+                        var barHeight = month.Revenue == 0 ? 2 : Math.Max(7, (int)(month.Revenue / maxSales * 100));
+                        <div class="chart-column" title="@month.Label: @month.Revenue.ToString("C0") · @month.OrderCount orders">
+                            <div class="chart-bar-track"><div class="chart-bar" style="height: @barHeight%"></div></div>
+                            <span class="chart-label">@month.Label</span>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </article>
+
+    <article class="panel">
+        <div class="panel-heading"><div><h2>Sales by category</h2><div class="panel-subtitle">Top categories across all orders</div></div></div>
+        @if (Model.TopCategories.Count == 0)
+        {
+            <div class="empty-state">Category sales will appear when order details are available.</div>
+        }
+        else
+        {
+            <div class="category-list">
+                @foreach (var category in Model.TopCategories)
+                {
+                    var width = Math.Max(3, (int)(category.Revenue / maxCategory * 100));
+                    <div class="category-row"><div class="category-meta"><span class="category-name">@category.Name</span><span class="category-amount">@category.Revenue.ToString("C0")</span></div><div class="category-track"><div class="category-fill" style="width: @width%"></div></div></div>
+                }
+            </div>
+        }
+    </article>
+</section>
+
+<section class="dashboard-lower">
+    <article class="panel table-panel">
+        <div class="panel-heading"><div><h2>Recent orders</h2><div class="panel-subtitle">Latest activity from your order book</div></div><a class="text-link" asp-controller="Orders" asp-action="Index">All orders&nbsp; →</a></div>
+        @if (Model.RecentOrders.Count == 0)
+        {
+            <div class="empty-state">No orders found.</div>
+        }
+        else
+        {
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>Order</th><th>Customer</th><th>Date</th><th>Status</th><th class="numeric">Total</th></tr></thead><tbody>
+                @foreach (var order in Model.RecentOrders)
+                {
+                    <tr><td><a class="order-link" asp-controller="Orders" asp-action="Details" asp-route-id="@order.OrderId">#@order.OrderId</a></td><td class="strong-cell">@order.CustomerName</td><td>@order.OrderDate?.ToString("dd MMM yyyy")</td><td><span class="status-pill @(order.ShippedDate is null ? "status-open" : "status-shipped")">@(order.ShippedDate is null ? "Open" : "Shipped")</span></td><td class="numeric strong-cell">@order.Total.ToString("C0")</td></tr>
+                }
+            </tbody></table></div>
+        }
+    </article>
+
+    <article class="panel table-panel">
+        <div class="panel-heading"><div><h2>Stock watch</h2><div class="panel-subtitle">Active products at or below reorder level</div></div><a class="text-link" asp-controller="Products" asp-action="Index" asp-route-stock="low">View products&nbsp; →</a></div>
+        @if (Model.LowStockProducts.Count == 0)
+        {
+            <div class="empty-state">Everything is above its reorder level.</div>
+        }
+        else
+        {
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>Product</th><th>Category</th><th class="numeric">In stock</th></tr></thead><tbody>
+                @foreach (var product in Model.LowStockProducts)
+                {
+                    <tr><td class="strong-cell">@product.ProductName</td><td>@product.Category?.CategoryName</td><td class="numeric"><span class="status-pill @(product.UnitsInStock == 0 ? "status-out" : "status-low")">@product.UnitsInStock</span></td></tr>
+                }
+            </tbody></table></div>
+        }
+    </article>
+</section>

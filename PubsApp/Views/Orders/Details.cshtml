@@ -1,0 +1,42 @@
+@model PubsApp.Models.OrderDetailsViewModel
+@{
+    ViewData["Title"] = $"Order #{Model.Order.OrderId}";
+    var order = Model.Order;
+    var subtotal = order.OrderDetails.Sum(x => x.UnitPrice * x.Quantity);
+    var discount = order.OrderDetails.Sum(x => x.UnitPrice * x.Quantity * Convert.ToDecimal(x.Discount));
+}
+
+<div class="page-heading">
+    <div><div class="eyebrow"><a class="text-link" asp-action="Index">Orders</a> / Order detail</div><h1>Order #@order.OrderId</h1><p>@order.OrderDate?.ToString("dddd, dd MMMM yyyy")</p></div>
+    <span class="status-pill @(order.ShippedDate is null ? "status-open" : "status-shipped")">@(order.ShippedDate is null ? "Open" : "Shipped")</span>
+</div>
+
+<div class="detail-card mb-3">
+    <div class="detail-grid">
+        <div><div class="detail-label">Customer</div><div class="detail-value">@order.Customer?.CompanyName</div><div class="panel-subtitle">@order.Customer?.ContactName</div></div>
+        <div><div class="detail-label">Ship to</div><div class="detail-value">@order.ShipName</div><div class="panel-subtitle">@order.ShipCity, @order.ShipCountry</div></div>
+        <div><div class="detail-label">Order handled by</div><div class="detail-value">@order.Employee?.FirstName @order.Employee?.LastName</div></div>
+        <div><div class="detail-label">Required date</div><div class="detail-value">@(order.RequiredDate?.ToString("dd MMM yyyy") ?? "—")</div></div>
+        <div><div class="detail-label">Shipped date</div><div class="detail-value">@(order.ShippedDate?.ToString("dd MMM yyyy") ?? "Not shipped")</div></div>
+        <div><div class="detail-label">Carrier</div><div class="detail-value">@(order.Shipper?.CompanyName ?? "—")</div></div>
+    </div>
+</div>
+
+<section class="panel table-panel">
+    <div class="panel-heading"><div><h2>Line items</h2><div class="panel-subtitle">@order.OrderDetails.Count products</div></div></div>
+    @if (order.OrderDetails.Count == 0)
+    {
+        <div class="empty-state">This order has no detail lines.</div>
+    }
+    else
+    {
+        <div class="table-wrap"><table class="data-table"><thead><tr><th>Product</th><th class="numeric">Unit price</th><th class="numeric">Quantity</th><th class="numeric">Discount</th><th class="numeric">Line total</th></tr></thead><tbody>
+            @foreach (var line in order.OrderDetails.OrderBy(x => x.Product?.ProductName))
+            {
+                var lineTotal = line.UnitPrice * line.Quantity * (1m - Convert.ToDecimal(line.Discount));
+                <tr><td class="strong-cell">@line.Product?.ProductName</td><td class="numeric">@line.UnitPrice.ToString("C2")</td><td class="numeric">@line.Quantity</td><td class="numeric">@Convert.ToDecimal(line.Discount).ToString("P0")</td><td class="numeric strong-cell">@lineTotal.ToString("C2")</td></tr>
+            }
+        </tbody></table></div>
+    }
+    <div class="order-totals"><div class="total-row"><span>Items before discount</span><strong>@subtotal.ToString("C2")</strong></div><div class="total-row"><span>Discount</span><strong>−@discount.ToString("C2")</strong></div><div class="total-row"><span>Freight</span><strong>@((order.Freight ?? 0).ToString("C2"))</strong></div><div class="total-row total-grand"><span>Order total</span><strong>@((Model.Total + (order.Freight ?? 0)).ToString("C2"))</strong></div></div>
+</section>

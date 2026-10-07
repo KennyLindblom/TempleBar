@@ -1,0 +1,42 @@
+@model PubsApp.Models.OrderListViewModel
+@{
+    ViewData["Title"] = "Orders";
+}
+
+<div class="page-heading">
+    <div><div class="eyebrow">Order management</div><h1>Orders</h1><p>Search and review customer orders.</p></div>
+    <div class="range-label">@Model.TotalCount.ToString("N0") orders</div>
+</div>
+
+<section class="filter-panel">
+    <form asp-action="Index" method="get" class="filter-form">
+        <div class="filter-control search-control"><label for="search">Search</label><input id="search" name="search" value="@Model.Search" placeholder="Order number or customer" /></div>
+        <div class="filter-control"><label for="status">Status</label><select id="status" name="status"><option value="all" selected="@(Model.Status == "all")">All orders</option><option value="open" selected="@(Model.Status == "open")">Open</option><option value="shipped" selected="@(Model.Status == "shipped")">Shipped</option></select></div>
+        <div class="filter-control"><label for="dateFrom">From</label><input id="dateFrom" name="dateFrom" type="date" value="@Model.DateFrom?.ToString("yyyy-MM-dd")" /></div>
+        <div class="filter-control"><label for="dateTo">To</label><input id="dateTo" name="dateTo" type="date" value="@Model.DateTo?.ToString("yyyy-MM-dd")" /></div>
+        <button class="btn-primary" type="submit">Apply filters</button>
+        <a class="btn-quiet" asp-action="Index">Reset</a>
+    </form>
+</section>
+
+<section class="panel table-panel">
+    <div class="panel-heading"><div><h2>Order book</h2><div class="panel-subtitle">Sorted by order date, newest first</div></div><span class="table-count">Page @Model.Page of @Model.TotalPages</span></div>
+    @if (Model.Orders.Count == 0)
+    {
+        <div class="empty-state">No orders match these filters.</div>
+    }
+    else
+    {
+        <div class="table-wrap"><table class="data-table"><thead><tr><th>Order</th><th>Customer</th><th>Order date</th><th>Shipped date</th><th>Status</th><th class="numeric">Order total</th></tr></thead><tbody>
+            @foreach (var order in Model.Orders)
+            {
+                <tr><td><a class="order-link" asp-action="Details" asp-route-id="@order.OrderId">#@order.OrderId</a></td><td class="strong-cell">@order.CustomerName</td><td>@order.OrderDate?.ToString("dd MMM yyyy")</td><td>@(order.ShippedDate?.ToString("dd MMM yyyy") ?? "—")</td><td><span class="status-pill @(order.ShippedDate is null ? "status-open" : "status-shipped")">@(order.ShippedDate is null ? "Open" : "Shipped")</span></td><td class="numeric strong-cell">@order.Total.ToString("C2")</td></tr>
+            }
+        </tbody></table></div>
+    }
+    <div class="pagination-row"><span>Showing @Model.Orders.Count of @Model.TotalCount orders</span><div class="pagination-links">
+        <a class="page-chip @(Model.Page <= 1 ? "disabled" : "")" asp-action="Index" asp-route-search="@Model.Search" asp-route-status="@Model.Status" asp-route-dateFrom="@Model.DateFrom?.ToString("yyyy-MM-dd")" asp-route-dateTo="@Model.DateTo?.ToString("yyyy-MM-dd")" asp-route-page="@(Model.Page - 1)">‹</a>
+        <span class="page-chip current">@Model.Page</span>
+        <a class="page-chip @(Model.Page >= Model.TotalPages ? "disabled" : "")" asp-action="Index" asp-route-search="@Model.Search" asp-route-status="@Model.Status" asp-route-dateFrom="@Model.DateFrom?.ToString("yyyy-MM-dd")" asp-route-dateTo="@Model.DateTo?.ToString("yyyy-MM-dd")" asp-route-page="@(Model.Page + 1)">›</a>
+    </div></div>
+</section>

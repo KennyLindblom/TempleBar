@@ -1,0 +1,41 @@
+@model PubsApp.Models.ProductListViewModel
+@{
+    ViewData["Title"] = "Products";
+}
+
+<div class="page-heading">
+    <div><div class="eyebrow">Catalog management</div><h1>Products</h1><p>Browse the catalog and spot inventory that needs attention.</p></div>
+    <div class="range-label">@Model.TotalCount.ToString("N0") products</div>
+</div>
+
+<section class="filter-panel">
+    <form asp-action="Index" method="get" class="filter-form">
+        <div class="filter-control search-control"><label for="search">Find a product</label><input id="search" name="search" value="@Model.Search" placeholder="Product name" /></div>
+        <div class="filter-control"><label for="categoryId">Category</label><select id="categoryId" name="categoryId"><option value="">All categories</option>@foreach (var category in Model.Categories){<option value="@category.CategoryId" selected="@(Model.CategoryId == category.CategoryId)">@category.CategoryName</option>}</select></div>
+        <div class="filter-control"><label for="stock">Availability</label><select id="stock" name="stock"><option value="all" selected="@(Model.Stock == "all")">All products</option><option value="low" selected="@(Model.Stock == "low")">Low stock</option><option value="out" selected="@(Model.Stock == "out")">Out of stock</option><option value="discontinued" selected="@(Model.Stock == "discontinued")">Discontinued</option></select></div>
+        <button class="btn-primary" type="submit">Filter products</button>
+        <a class="btn-quiet" asp-action="Index">Reset</a>
+    </form>
+</section>
+
+<section class="panel table-panel">
+    <div class="panel-heading"><div><h2>Product catalog</h2><div class="panel-subtitle">Current prices and inventory from SQL Server</div></div><span class="table-count">Page @Model.Page of @Model.TotalPages</span></div>
+    @if (Model.Products.Count == 0)
+    {
+        <div class="empty-state">No products match these filters.</div>
+    }
+    else
+    {
+        <div class="table-wrap"><table class="data-table"><thead><tr><th>Product</th><th>Category</th><th>Package</th><th class="numeric">Unit price</th><th class="numeric">In stock</th><th>Status</th></tr></thead><tbody>
+            @foreach (var product in Model.Products)
+            {
+                <tr><td class="strong-cell">@product.ProductName</td><td>@(product.Category?.CategoryName ?? "—")</td><td>@product.QuantityPerUnit</td><td class="numeric">@product.UnitPrice?.ToString("C2")</td><td class="numeric"><span class="stock-value">@product.UnitsInStock</span><span class="panel-subtitle"> / reorder @product.ReorderLevel</span></td><td><span class="status-pill @(product.Discontinued ? "status-out" : product.UnitsInStock == 0 ? "status-out" : product.UnitsInStock <= product.ReorderLevel ? "status-low" : "status-shipped")">@(product.Discontinued ? "Discontinued" : product.UnitsInStock == 0 ? "Out of stock" : product.UnitsInStock <= product.ReorderLevel ? "Low stock" : "In stock")</span></td></tr>
+            }
+        </tbody></table></div>
+    }
+    <div class="pagination-row"><span>Showing @Model.Products.Count of @Model.TotalCount products</span><div class="pagination-links">
+        <a class="page-chip @(Model.Page <= 1 ? "disabled" : "")" asp-action="Index" asp-route-search="@Model.Search" asp-route-categoryId="@Model.CategoryId" asp-route-stock="@Model.Stock" asp-route-page="@(Model.Page - 1)">‹</a>
+        <span class="page-chip current">@Model.Page</span>
+        <a class="page-chip @(Model.Page >= Model.TotalPages ? "disabled" : "")" asp-action="Index" asp-route-search="@Model.Search" asp-route-categoryId="@Model.CategoryId" asp-route-stock="@Model.Stock" asp-route-page="@(Model.Page + 1)">›</a>
+    </div></div>
+</section>
