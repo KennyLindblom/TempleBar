@@ -1,0 +1,55 @@
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] · Northwind</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <a class="brand" asp-controller="Home" asp-action="Index">
+                <span class="brand-mark">N</span>
+                <span class="brand-copy"><strong>Northwind</strong><small>Sales workspace</small></span>
+            </a>
+            <div class="sidebar-label">WORKSPACE</div>
+            <nav class="sidebar-nav" aria-label="Main navigation">
+                <a class="side-link @(currentController == "Home" ? "is-active" : "")" asp-controller="Home" asp-action="Index">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="10" width="8" height="11" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/></svg><span>Overview</span>
+                </a>
+                <a class="side-link @(currentController == "Orders" ? "is-active" : "")" asp-controller="Orders" asp-action="Index">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h2l2.1 10.1a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L22 9H7"/><circle cx="10" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg><span>Orders</span>
+                </a>
+                <a class="side-link @(currentController == "Products" ? "is-active" : "")" asp-controller="Products" asp-action="Index">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5M3 16l9 5 9-5M12 8v13"/></svg><span>Products</span>
+                </a>
+                <a class="side-link @(currentController == "Customers" ? "is-active" : "")" asp-controller="Customers" asp-action="Index">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 5a3.5 3.5 0 0 1 0 6.8M18 14a5 5 0 0 1 3.5 5"/></svg><span>Customers</span>
+                </a>
+            </nav>
+            <div class="sidebar-bottom">
+                <span class="connection-dot"></span>
+                <span><strong>SQL Server</strong><small>Connected workspace</small></span>
+            </div>
+        </aside>
+
+        <div class="app-main">
+            <header class="topbar">
+                <div class="topbar-crumb"><span>Northwind</span><span class="crumb-separator">/</span><strong>@ViewData["Title"]</strong></div>
+                <div class="topbar-user"><span class="avatar">NW</span><span class="user-label">Northwind data</span></div>
+            </header>
+            <main class="page-content" role="main">
+                @RenderBody()
+            </main>
+            <footer class="page-footer"><span>Northwind Sales Workspace</span><span>Connected to your existing database</span></footer>
+        </div>
+    </div>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

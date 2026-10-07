@@ -1,0 +1,39 @@
+@model PubsApp.Models.CustomerListViewModel
+@{
+    ViewData["Title"] = "Customers";
+}
+
+<div class="page-heading">
+    <div><div class="eyebrow">Customer directory</div><h1>Customers</h1><p>Find customers by company, contact, city, or country.</p></div>
+    <div class="range-label">@Model.TotalCount.ToString("N0") customers</div>
+</div>
+
+<section class="filter-panel">
+    <form asp-action="Index" method="get" class="filter-form">
+        <div class="filter-control search-control"><label for="search">Search customers</label><input id="search" name="search" value="@Model.Search" placeholder="Company, contact, or location" /></div>
+        <button class="btn-primary" type="submit">Search</button>
+        <a class="btn-quiet" asp-action="Index">Reset</a>
+    </form>
+</section>
+
+<section class="panel table-panel">
+    <div class="panel-heading"><div><h2>Customer directory</h2><div class="panel-subtitle">Existing records in your database</div></div><span class="table-count">Page @Model.Page of @Model.TotalPages</span></div>
+    @if (Model.Customers.Count == 0)
+    {
+        <div class="empty-state">No customers match this search.</div>
+    }
+    else
+    {
+        <div class="table-wrap"><table class="data-table"><thead><tr><th>Company</th><th>Contact</th><th>City</th><th>Country</th><th>Phone</th></tr></thead><tbody>
+            @foreach (var customer in Model.Customers)
+            {
+                <tr><td class="strong-cell">@customer.CompanyName</td><td>@customer.ContactName</td><td>@customer.City</td><td>@customer.Country</td><td>@customer.Phone</td></tr>
+            }
+        </tbody></table></div>
+    }
+    <div class="pagination-row"><span>Showing @Model.Customers.Count of @Model.TotalCount customers</span><div class="pagination-links">
+        <a class="page-chip @(Model.Page <= 1 ? "disabled" : "")" asp-action="Index" asp-route-search="@Model.Search" asp-route-page="@(Model.Page - 1)">‹</a>
+        <span class="page-chip current">@Model.Page</span>
+        <a class="page-chip @(Model.Page >= Model.TotalPages ? "disabled" : "")" asp-action="Index" asp-route-search="@Model.Search" asp-route-page="@(Model.Page + 1)">›</a>
+    </div></div>
+</section>
