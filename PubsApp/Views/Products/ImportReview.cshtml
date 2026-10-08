@@ -1,0 +1,28 @@
+@model PubsApp.Models.ExternalProductImportViewModel
+@{
+    ViewData["Title"] = "Review product import";
+}
+
+<div class="page-heading">
+    <div><div class="eyebrow"><a class="text-link" asp-action="ImportSearch">External catalog</a> / Review</div><h1>Review before adding</h1><p>Check the imported details and set the catalog fields.</p></div>
+</div>
+
+<div class="detail-card mb-3">
+    <div class="detail-grid">
+        <div><div class="detail-label">Open Food Facts product</div><div class="detail-value"><a href="https://world.openfoodfacts.org/product/@Model.Barcode" target="_blank" rel="noopener">Barcode @Model.Barcode ↗</a></div></div>
+        <div><div class="detail-label">Source category</div><div class="detail-value">@(string.IsNullOrWhiteSpace(Model.SourceCategory) ? "Not provided" : Model.SourceCategory)</div></div>
+    </div>
+</div>
+
+<form asp-action="Import" method="post" class="panel edit-panel">
+    <input asp-for="Barcode" type="hidden" />
+    <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+    <div class="form-grid">
+        <div class="filter-control"><label asp-for="ProductName">Catalog product name</label><input asp-for="ProductName" maxlength="40" required /><span asp-validation-for="ProductName" class="field-error"></span></div>
+        <div class="filter-control"><label asp-for="Quantity">Package description</label><input asp-for="Quantity" maxlength="20" /><span asp-validation-for="Quantity" class="field-error"></span></div>
+        <div class="filter-control"><label asp-for="CategoryId">Database category</label><select asp-for="CategoryId"><option value="">No category</option>@foreach (var category in Model.Categories) { <option value="@category.CategoryId">@category.CategoryName</option> }</select><span asp-validation-for="CategoryId" class="field-error"></span></div>
+        <div class="filter-control"><label asp-for="UnitPrice">Unit price in your catalog</label><input asp-for="UnitPrice" type="number" min="0" step="0.01" placeholder="Enter your price" /><span asp-validation-for="UnitPrice" class="field-error"></span></div>
+    </div>
+    <p class="panel-subtitle mt-3">Open Food Facts does not provide a reliable price for your catalog. New products start with zero stock. Your database has no barcode field, so the barcode is used to look up the source product but is not saved.</p>
+    <div class="form-actions"><a class="btn-quiet" asp-action="ImportSearch">Back to search</a><button class="btn-primary" type="submit">Add to my products</button></div>
+</form>

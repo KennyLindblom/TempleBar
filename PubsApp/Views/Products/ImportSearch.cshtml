@@ -1,0 +1,35 @@
+@model PubsApp.Models.OpenFoodFactsSearchViewModel
+@{
+    ViewData["Title"] = "Import products";
+}
+
+<div class="page-heading">
+    <div><div class="eyebrow"><a class="text-link" asp-action="Index">Products</a> / External catalog</div><h1>Find a food or beverage</h1><p>Search Open Food Facts, review a product, then choose what to save in your catalog.</p></div>
+</div>
+
+<section class="filter-panel">
+    <form asp-action="ImportSearch" method="get" class="filter-form">
+        <div class="filter-control search-control"><label for="query">Product name, brand, or barcode</label><input id="query" name="query" value="@Model.Query" maxlength="80" minlength="2" placeholder="e.g. sparkling water" /></div>
+        <button class="btn-primary" type="submit">Search catalog</button>
+        <a class="btn-quiet" asp-action="Index">Back to products</a>
+    </form>
+</section>
+
+<p class="panel-subtitle mt-3">Product data from <a href="https://world.openfoodfacts.org" target="_blank" rel="noopener">Open Food Facts</a>, licensed under the <a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener">ODbL</a>. Community-contributed data may be incomplete. Price and starting stock are entered in your app.</p>
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+    <div class="alert alert-info mt-3">@Model.Message</div>
+}
+
+@if (Model.Results.Count > 0)
+{
+    <section class="panel table-panel mt-3">
+        <div class="panel-heading"><div><h2>Search results</h2><div class="panel-subtitle">Showing up to 20 matching products</div></div></div>
+        <div class="table-wrap"><table class="data-table"><thead><tr><th>Product</th><th>Brand</th><th>Package</th><th>Barcode</th><th></th></tr></thead><tbody>
+        @foreach (var product in Model.Results)
+        {
+            <tr><td class="strong-cell">@product.ProductName</td><td>@product.Brands</td><td>@product.Quantity</td><td>@product.Code</td><td><a class="order-link" asp-action="ImportReview" asp-route-barcode="@product.Code">Review and add →</a></td></tr>
+        }
+        </tbody></table></div>
+    </section>
+}

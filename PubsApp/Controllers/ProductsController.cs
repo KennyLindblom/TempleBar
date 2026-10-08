@@ -5,7 +5,7 @@ using PubsApp.Models;
 
 namespace PubsApp.Controllers;
 
-public class ProductsController(NorthwindContext database) : Controller
+public class ProductsController(NorthwindContext database, OpenFoodFactsClient openFoodFacts) : Controller
 {
     public async Task<IActionResult> Index(string? search, int? categoryId, string stock = "all", int page = 1)
     {
@@ -39,6 +39,102 @@ public class ProductsController(NorthwindContext database) : Controller
             Categories = await database.Categories.AsNoTracking().OrderBy(x => x.CategoryName).ToListAsync(),
             Products = await products.OrderBy(x => x.ProductName).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync()
         });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ImportSearch(string? query, CancellationToken cancellationToken)
+    {
+        var model = new OpenFoodFactsSearchViewModel { Query = query, Message = TempData["Message"] as string };
+        if (string.IsNullOrWhiteSpace(query)) return View(model);
+        query = query.Trim();
+        if (query.Length < 2 || query.Length > 80)
+        {
+            model.Message = "Enter between 2 and 80 characters to search.";
+            return View(model);
+        }
+
+        try
+        {
+            var result = await openFoodFacts.SearchAsync(query, cancellationToken);
+            model.Results = result.Products.Where(p => !string.IsNullOrWhiteSpace(p.Code) &&
+                !string.IsNullOrWhiteSpace(p.ProductName)).ToList();
+            if (model.Results.Count == 0) model.Message = "No products found. Try another search.";
+        }
+        catch (HttpRequestException)
+        {
+            model.Message = "Open Food Facts could not be reached right now. Please try again shortly.";
+        }
+        return View(model);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ImportReview(string barcode, CancellationToken cancellationToken)
+    {
+        if (!IsValidBarcode(barcode)) return BadRequest();
+        try
+        {
+            var external = await openFoodFacts.GetProductAsync(barcode, cancellationToken);
+            if (external is null || string.IsNullOrWhiteSpace(external.ProductName)) return NotFound();
+            return View(await BuildImportModel(external));
+        }
+        catch (HttpRequestException)
+        {
+            TempData["Message"] = "Open Food Facts could not be reached right now. Please try again shortly.";
+            return RedirectToAction(nameof(ImportSearch));
+        }
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Import(ExternalProductImportViewModel model, CancellationToken cancellationToken)
+    {
+        if (!IsValidBarcode(model.Barcode)) return BadRequest();
+        if (string.IsNullOrWhiteSpace(model.ProductName) || model.ProductName.Trim().Length > 40)
+            ModelState.AddModelError(nameof(model.ProductName), "Product name is required and must be 40 characters or fewer.");
+        if (model.Quantity?.Length > 20)
+            ModelState.AddModelError(nameof(model.Quantity), "Package description must be 20 characters or fewer.");
+        if (model.UnitPrice < 0)
+            ModelState.AddModelError(nameof(model.UnitPrice), "Price cannot be negative.");
+        if (model.CategoryId.HasValue && !await database.Categories.AnyAsync(x => x.CategoryId == model.CategoryId, cancellationToken))
+            ModelState.AddModelError(nameof(model.CategoryId), "Choose a valid category.");
+
+        OpenFoodFactsProduct? external;
+        try { external = await openFoodFacts.GetProductAsync(model.Barcode, cancellationToken); }
+        catch (HttpRequestException)
+        {
+            ModelState.AddModelError(string.Empty, "Open Food Facts could not be reached. Please try again shortly.");
+            external = null;
+        }
+        if (external is null)
+            ModelState.AddModelError(string.Empty, "That product could not be verified with Open Food Facts.");
+
+        if (ModelState.IsValid)
+        {
+            var productName = model.ProductName.Trim();
+            if (await database.Products.AnyAsync(x => x.ProductName == productName, cancellationToken))
+                ModelState.AddModelError(nameof(model.ProductName), "A product with this name already exists in your catalog.");
+            else
+            {
+                database.Products.Add(new Product
+                {
+                    ProductName = productName,
+                    CategoryId = model.CategoryId,
+                    QuantityPerUnit = string.IsNullOrWhiteSpace(model.Quantity) ? null : model.Quantity.Trim(),
+                    UnitPrice = model.UnitPrice,
+                    UnitsInStock = 0,
+                    UnitsOnOrder = 0,
+                    ReorderLevel = 0,
+                    Discontinued = false
+                });
+                await database.SaveChangesAsync(cancellationToken);
+                TempData["Message"] = $"{productName} was added to your product catalog. Set its inventory from the product edit page when ready.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        model.Categories = await GetCategories();
+        model.SourceCategory = external?.Categories ?? model.SourceCategory;
+        model.ImageUrl = external?.ImageUrl ?? model.ImageUrl;
+        return View("ImportReview", model);
     }
 
     [HttpGet]
@@ -127,6 +223,32 @@ public class ProductsController(NorthwindContext database) : Controller
         Product = product,
         Categories = await database.Categories.AsNoTracking().OrderBy(x => x.CategoryName).ToListAsync()
     };
+
+    private async Task<ExternalProductImportViewModel> BuildImportModel(OpenFoodFactsProduct external)
+    {
+        var categories = await GetCategories();
+        var beveragesCategory = categories.FirstOrDefault(x => x.CategoryName.Equals("Beverages", StringComparison.OrdinalIgnoreCase));
+        var sourceName = external.ProductName!;
+        var suggestedName = string.IsNullOrWhiteSpace(external.Brands)
+            ? sourceName
+            : $"{sourceName} ({external.Brands})";
+        return new ExternalProductImportViewModel
+        {
+            Barcode = external.Code,
+            ProductName = suggestedName.Length <= 40 ? suggestedName : sourceName[..Math.Min(sourceName.Length, 40)],
+            Quantity = external.Quantity,
+            SourceCategory = external.Categories,
+            ImageUrl = external.ImageUrl,
+            CategoryId = beveragesCategory?.CategoryId,
+            Categories = categories
+        };
+    }
+
+    private Task<List<Category>> GetCategories() => database.Categories.AsNoTracking()
+        .OrderBy(x => x.CategoryName).ToListAsync();
+
+    private static bool IsValidBarcode(string? barcode) => !string.IsNullOrWhiteSpace(barcode) &&
+        barcode.Length <= 32 && barcode.All(char.IsAsciiDigit);
 
     private void ValidateProduct(Product product)
     {
