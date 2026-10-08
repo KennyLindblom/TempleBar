@@ -1,0 +1,18 @@
+@model PubsApp.Models.CustomerDeleteViewModel
+@{
+    ViewData["Title"] = "Delete customer";
+}
+
+<div class="page-heading"><div><div class="eyebrow"><a class="text-link" asp-action="Details" asp-route-id="@Model.Customer.CustomerId">Customer profile</a> / Delete</div><h1>Delete customer</h1></div></div>
+<section class="panel confirm-panel">
+    @if (Model.HasOrders)
+    {
+        <div class="warning-mark">!</div><h2>Customer history must be kept</h2><p><strong>@Model.Customer.CompanyName</strong> has orders in the database. Deleting the customer would break that history, so deletion is blocked. You can edit the customer record instead.</p>
+        <a class="btn-primary" asp-action="Details" asp-route-id="@Model.Customer.CustomerId">Back to customer</a>
+    }
+    else
+    {
+        <div class="warning-mark">!</div><h2>Delete this customer?</h2><p>This permanently removes <strong>@Model.Customer.CompanyName</strong> from the existing Northwind database.</p>
+        <form asp-action="DeleteConfirmed" asp-route-id="@Model.Customer.CustomerId" method="post" class="form-actions"><a class="btn-quiet" asp-action="Details" asp-route-id="@Model.Customer.CustomerId">Cancel</a><button class="btn-danger" type="submit">Delete customer</button></form>
+    }
+</section>

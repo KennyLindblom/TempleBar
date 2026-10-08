@@ -1,0 +1,18 @@
+@model PubsApp.Models.ProductDeleteViewModel
+@{
+    ViewData["Title"] = "Delete product";
+}
+
+<div class="page-heading"><div><div class="eyebrow"><a class="text-link" asp-action="Details" asp-route-id="@Model.Product.ProductId">Product detail</a> / Delete</div><h1>Delete product</h1></div></div>
+<section class="panel confirm-panel">
+    @if (Model.HasOrderHistory)
+    {
+        <div class="warning-mark">!</div><h2>Order history protects this product</h2><p><strong>@Model.Product.ProductName</strong> appears on existing orders. Deleting it would damage that history. Edit the product and mark it discontinued instead.</p>
+        <a class="btn-primary" asp-action="Edit" asp-route-id="@Model.Product.ProductId">Edit product</a>
+    }
+    else
+    {
+        <div class="warning-mark">!</div><h2>Delete this product?</h2><p>This permanently removes <strong>@Model.Product.ProductName</strong> from the existing Products table.</p>
+        <form asp-action="DeleteConfirmed" asp-route-id="@Model.Product.ProductId" method="post" class="form-actions"><a class="btn-quiet" asp-action="Details" asp-route-id="@Model.Product.ProductId">Cancel</a><button class="btn-danger" type="submit">Delete product</button></form>
+    }
+</section>

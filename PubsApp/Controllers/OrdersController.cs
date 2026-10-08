@@ -5,7 +5,7 @@ using PubsApp.Models;
 
 namespace PubsApp.Controllers;
 
-public class OrdersController(NorthwindContext database) : Controller
+public class OrdersController(NorthwindContext database, NorthwindProcedures procedures) : Controller
 {
     public async Task<IActionResult> Index(string? search, string status = "all", DateTime? dateFrom = null, DateTime? dateTo = null, int page = 1)
     {
@@ -60,12 +60,75 @@ public class OrdersController(NorthwindContext database) : Controller
             .Include(x => x.Customer)
             .Include(x => x.Employee)
             .Include(x => x.Shipper)
-            .Include(x => x.OrderDetails).ThenInclude(x => x.Product)
             .FirstOrDefaultAsync(x => x.OrderId == id);
         if (order is null)
             return NotFound();
 
-        var total = order.OrderDetails.Sum(x => x.UnitPrice * x.Quantity * (1m - Convert.ToDecimal(x.Discount)));
-        return View(new OrderDetailsViewModel { Order = order, Total = total });
+        var lines = await procedures.GetOrderDetailsAsync(id);
+        var total = lines.Sum(x => x.ExtendedPrice);
+        return View(new OrderDetailsViewModel { Order = order, Lines = lines, Total = total });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Edit(int id)
+    {
+        var order = await database.Orders.AsNoTracking().FirstOrDefaultAsync(x => x.OrderId == id);
+        if (order is null) return NotFound();
+        return View(await ToEditModel(order));
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, OrderEditViewModel model)
+    {
+        if (id != model.OrderId) return BadRequest();
+        if (model.Freight < 0) ModelState.AddModelError(nameof(model.Freight), "Freight cannot be negative.");
+        if (model.RequiredDate.HasValue && model.ShippedDate.HasValue && model.ShippedDate < model.RequiredDate)
+            ModelState.AddModelError(nameof(model.ShippedDate), "Shipped date is earlier than the required date.");
+        if (!ModelState.IsValid) return View(await ToEditModel(model));
+        var order = await database.Orders.FirstOrDefaultAsync(x => x.OrderId == id);
+        if (order is null) return NotFound();
+        order.RequiredDate = model.RequiredDate; order.ShippedDate = model.ShippedDate;
+        order.ShipVia = model.ShipVia; order.Freight = model.Freight;
+        order.ShipName = model.ShipName; order.ShipAddress = model.ShipAddress; order.ShipCity = model.ShipCity;
+        order.ShipRegion = model.ShipRegion; order.ShipPostalCode = model.ShipPostalCode; order.ShipCountry = model.ShipCountry;
+        await database.SaveChangesAsync();
+        TempData["Message"] = $"Order #{id} updated.";
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var order = await database.Orders.AsNoTracking().Include(x => x.Customer).FirstOrDefaultAsync(x => x.OrderId == id);
+        return order is null ? NotFound() : View(order);
+    }
+
+    [HttpPost, ActionName("Delete"), ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(int id)
+    {
+        await using var transaction = await database.Database.BeginTransactionAsync();
+        var order = await database.Orders.FirstOrDefaultAsync(x => x.OrderId == id);
+        if (order is null) return NotFound();
+        var lines = await database.OrderDetails.Where(x => x.OrderId == id).ToListAsync();
+        database.OrderDetails.RemoveRange(lines);
+        database.Orders.Remove(order);
+        await database.SaveChangesAsync();
+        await transaction.CommitAsync();
+        TempData["Message"] = $"Order #{id} deleted.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    private async Task<OrderEditViewModel> ToEditModel(Order order) => new()
+    {
+        OrderId = order.OrderId, RequiredDate = order.RequiredDate, ShippedDate = order.ShippedDate,
+        ShipVia = order.ShipVia, Freight = order.Freight, ShipName = order.ShipName, ShipAddress = order.ShipAddress,
+        ShipCity = order.ShipCity, ShipRegion = order.ShipRegion, ShipPostalCode = order.ShipPostalCode,
+        ShipCountry = order.ShipCountry, Shippers = await database.Shippers.AsNoTracking().OrderBy(x => x.CompanyName).ToListAsync()
+    };
+
+    private async Task<OrderEditViewModel> ToEditModel(OrderEditViewModel model)
+    {
+        model.Shippers = await database.Shippers.AsNoTracking().OrderBy(x => x.CompanyName).ToListAsync();
+        return model;
     }
 }
