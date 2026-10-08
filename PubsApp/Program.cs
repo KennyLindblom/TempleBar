@@ -8,6 +8,19 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<NorthwindContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Northwind")));
 builder.Services.AddScoped<NorthwindProcedures>();
+builder.Services.AddHttpClient<OpenFoodFactsClient>((services, client) =>
+{
+    var configuration = services.GetRequiredService<IConfiguration>();
+    var baseAddress = configuration["OpenFoodFacts:BaseUrl"] ?? "https://world.openfoodfacts.org/";
+    client.BaseAddress = new Uri(baseAddress);
+    client.Timeout = TimeSpan.FromSeconds(15);
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("PubsApp/1.0 (local learning project)");
+    if (new Uri(baseAddress).Host.Equals("world.openfoodfacts.net", StringComparison.OrdinalIgnoreCase))
+    {
+        var credentials = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("off:off"));
+        client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", credentials);
+    }
+});
 
 var app = builder.Build();
 
