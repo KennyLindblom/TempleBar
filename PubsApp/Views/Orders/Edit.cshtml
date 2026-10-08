@@ -1,0 +1,18 @@
+@model PubsApp.Models.OrderEditViewModel
+@{ ViewData["Title"] = $"Edit order #{Model.OrderId}"; }
+<div class="page-heading"><div><div class="eyebrow"><a asp-action="Details" asp-route-id="@Model.OrderId">Order #@Model.OrderId</a> / Edit</div><h1>Edit order</h1><p>Update delivery and shipping information.</p></div></div>
+<form asp-action="Edit" asp-route-id="@Model.OrderId" method="post" class="edit-panel">
+    <input asp-for="OrderId" type="hidden" />
+    <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+    <div class="form-grid">
+        <div><label asp-for="RequiredDate"></label><input asp-for="RequiredDate" type="date" /><span asp-validation-for="RequiredDate" class="field-error"></span></div>
+        <div><label asp-for="ShippedDate"></label><input asp-for="ShippedDate" type="date" /><span asp-validation-for="ShippedDate" class="field-error"></span></div>
+        <div><label asp-for="ShipVia">Carrier</label><select asp-for="ShipVia"><option value="">No carrier</option>@foreach (var shipper in Model.Shippers) { <option value="@shipper.ShipperId">@shipper.CompanyName</option> }</select></div>
+        <div><label asp-for="Freight"></label><input asp-for="Freight" type="number" min="0" step="0.01" /><span asp-validation-for="Freight" class="field-error"></span></div>
+        <div><label asp-for="ShipName"></label><input asp-for="ShipName" /></div><div><label asp-for="ShipAddress"></label><input asp-for="ShipAddress" /></div>
+        <div><label asp-for="ShipCity"></label><input asp-for="ShipCity" /></div><div><label asp-for="ShipRegion"></label><input asp-for="ShipRegion" /></div>
+        <div><label asp-for="ShipPostalCode"></label><input asp-for="ShipPostalCode" /></div><div><label asp-for="ShipCountry"></label><input asp-for="ShipCountry" /></div>
+    </div>
+    <div class="form-actions"><button class="btn btn-primary" type="submit">Save changes</button><a class="btn btn-link" asp-action="Details" asp-route-id="@Model.OrderId">Cancel</a></div>
+</form>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

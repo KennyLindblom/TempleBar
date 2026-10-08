@@ -1,0 +1,6 @@
+@model PubsApp.Models.Order
+@{ ViewData["Title"] = $"Delete order #{Model.OrderId}"; }
+<div class="page-heading"><div><div class="eyebrow">Orders / Confirmation</div><h1>Delete order #@Model.OrderId?</h1><p>This permanently removes the order and its detail lines.</p></div></div>
+<div class="confirm-panel"><p>Customer: <strong>@(Model.Customer?.CompanyName ?? "No customer")</strong></p><p>Order date: <strong>@(Model.OrderDate?.ToString("dd MMM yyyy") ?? "—")</strong></p>
+    <form asp-action="Delete" asp-route-id="@Model.OrderId" method="post" class="form-actions"><button type="submit" class="btn btn-danger">Delete order and lines</button><a class="btn btn-link" asp-action="Details" asp-route-id="@Model.OrderId">Cancel</a></form>
+</div>

@@ -8,6 +8,11 @@
     <div class="range-label">@Model.TotalCount.ToString("N0") products</div>
 </div>
 
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+    <div class="alert alert-info">@Model.Message</div>
+}
+
 <section class="filter-panel">
     <form asp-action="Index" method="get" class="filter-form">
         <div class="filter-control search-control"><label for="search">Find a product</label><input id="search" name="search" value="@Model.Search" placeholder="Product name" /></div>
@@ -29,7 +34,7 @@
         <div class="table-wrap"><table class="data-table"><thead><tr><th>Product</th><th>Category</th><th>Package</th><th class="numeric">Unit price</th><th class="numeric">In stock</th><th>Status</th></tr></thead><tbody>
             @foreach (var product in Model.Products)
             {
-                <tr><td class="strong-cell">@product.ProductName</td><td>@(product.Category?.CategoryName ?? "—")</td><td>@product.QuantityPerUnit</td><td class="numeric">@product.UnitPrice?.ToString("C2")</td><td class="numeric"><span class="stock-value">@product.UnitsInStock</span><span class="panel-subtitle"> / reorder @product.ReorderLevel</span></td><td><span class="status-pill @(product.Discontinued ? "status-out" : product.UnitsInStock == 0 ? "status-out" : product.UnitsInStock <= product.ReorderLevel ? "status-low" : "status-shipped")">@(product.Discontinued ? "Discontinued" : product.UnitsInStock == 0 ? "Out of stock" : product.UnitsInStock <= product.ReorderLevel ? "Low stock" : "In stock")</span></td></tr>
+                <tr><td class="strong-cell"><a class="order-link" asp-action="Details" asp-route-id="@product.ProductId">@product.ProductName</a></td><td>@(product.Category?.CategoryName ?? "—")</td><td>@product.QuantityPerUnit</td><td class="numeric">@product.UnitPrice?.ToString("C2")</td><td class="numeric"><span class="stock-value">@product.UnitsInStock</span><span class="panel-subtitle"> / reorder @product.ReorderLevel</span></td><td><span class="status-pill @(product.Discontinued ? "status-out" : product.UnitsInStock == 0 ? "status-out" : product.UnitsInStock <= product.ReorderLevel ? "status-low" : "status-shipped")">@(product.Discontinued ? "Discontinued" : product.UnitsInStock == 0 ? "Out of stock" : product.UnitsInStock <= product.ReorderLevel ? "Low stock" : "In stock")</span></td></tr>
             }
         </tbody></table></div>
     }

@@ -1,0 +1,61 @@
+@model PubsApp.Models.CustomerDetailsViewModel
+@{
+    ViewData["Title"] = Model.Customer.CompanyName;
+    var customer = Model.Customer;
+}
+
+<div class="page-heading">
+    <div><div class="eyebrow"><a class="text-link" asp-action="Index">Customers</a> / Profile</div><h1>@customer.CompanyName</h1><p>@customer.ContactName · @customer.ContactTitle</p></div>
+    <div class="d-flex gap-2"><a class="btn-quiet" asp-action="Edit" asp-route-id="@customer.CustomerId">Edit customer</a><a class="btn-quiet danger-link" asp-action="Delete" asp-route-id="@customer.CustomerId">Delete</a></div>
+</div>
+
+@if (TempData["Message"] is string message)
+{
+    <div class="alert alert-info">@message</div>
+}
+
+<div class="detail-card mb-3">
+    <div class="detail-grid customer-profile-grid">
+        <div><div class="detail-label">Customer ID</div><div class="detail-value">@customer.CustomerId</div></div>
+        <div><div class="detail-label">Address</div><div class="detail-value">@customer.Address</div></div>
+        <div><div class="detail-label">Location</div><div class="detail-value">@customer.City, @customer.Region @customer.PostalCode</div><div class="panel-subtitle">@customer.Country</div></div>
+        <div><div class="detail-label">Phone</div><div class="detail-value">@customer.Phone</div></div>
+        <div><div class="detail-label">Fax</div><div class="detail-value">@customer.Fax</div></div>
+        <div><div class="detail-label">Relationship</div><div class="detail-value">@Model.Orders.Count orders</div></div>
+    </div>
+</div>
+
+<div class="dashboard-lower">
+    <section class="panel table-panel">
+        <div class="panel-heading"><div><h2>Order history</h2><div class="panel-subtitle">From stored procedure CustOrdersOrders</div></div></div>
+        @if (Model.Orders.Count == 0)
+        {
+            <div class="empty-state">This customer has no orders.</div>
+        }
+        else
+        {
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>Order</th><th>Order date</th><th>Required</th><th>Shipped</th><th>Status</th></tr></thead><tbody>
+                @foreach (var order in Model.Orders.OrderByDescending(x => x.OrderDate))
+                {
+                    <tr><td><a class="order-link" asp-controller="Orders" asp-action="Details" asp-route-id="@order.OrderId">#@order.OrderId</a></td><td>@order.OrderDate?.ToString("dd MMM yyyy")</td><td>@order.RequiredDate?.ToString("dd MMM yyyy")</td><td>@(order.ShippedDate?.ToString("dd MMM yyyy") ?? "—")</td><td><span class="status-pill @(order.ShippedDate is null ? "status-open" : "status-shipped")">@(order.ShippedDate is null ? "Open" : "Shipped")</span></td></tr>
+                }
+            </tbody></table></div>
+        }
+    </section>
+    <section class="panel table-panel">
+        <div class="panel-heading"><div><h2>Products purchased</h2><div class="panel-subtitle">From stored procedure CustOrderHist</div></div></div>
+        @if (Model.ProductHistory.Count == 0)
+        {
+            <div class="empty-state">No product history is available.</div>
+        }
+        else
+        {
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>Product</th><th class="numeric">Units purchased</th></tr></thead><tbody>
+                @foreach (var product in Model.ProductHistory.OrderByDescending(x => x.Total))
+                {
+                    <tr><td class="strong-cell">@product.ProductName</td><td class="numeric">@product.Total.ToString("N0")</td></tr>
+                }
+            </tbody></table></div>
+        }
+    </section>
+</div>

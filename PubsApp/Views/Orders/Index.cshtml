@@ -8,6 +8,8 @@
     <div class="range-label">@Model.TotalCount.ToString("N0") orders</div>
 </div>
 
+@if (TempData["Message"] is string message) { <div class="alert alert-info">@message</div> }
+
 <section class="filter-panel">
     <form asp-action="Index" method="get" class="filter-form">
         <div class="filter-control search-control"><label for="search">Search</label><input id="search" name="search" value="@Model.Search" placeholder="Order number or customer" /></div>

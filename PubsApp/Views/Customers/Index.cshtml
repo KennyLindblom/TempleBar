@@ -8,6 +8,11 @@
     <div class="range-label">@Model.TotalCount.ToString("N0") customers</div>
 </div>
 
+@if (!string.IsNullOrWhiteSpace(Model.Message))
+{
+    <div class="alert alert-info">@Model.Message</div>
+}
+
 <section class="filter-panel">
     <form asp-action="Index" method="get" class="filter-form">
         <div class="filter-control search-control"><label for="search">Search customers</label><input id="search" name="search" value="@Model.Search" placeholder="Company, contact, or location" /></div>
@@ -27,7 +32,7 @@
         <div class="table-wrap"><table class="data-table"><thead><tr><th>Company</th><th>Contact</th><th>City</th><th>Country</th><th>Phone</th></tr></thead><tbody>
             @foreach (var customer in Model.Customers)
             {
-                <tr><td class="strong-cell">@customer.CompanyName</td><td>@customer.ContactName</td><td>@customer.City</td><td>@customer.Country</td><td>@customer.Phone</td></tr>
+                <tr><td class="strong-cell"><a class="order-link" asp-action="Details" asp-route-id="@customer.CustomerId">@customer.CompanyName</a></td><td>@customer.ContactName</td><td>@customer.City</td><td>@customer.Country</td><td>@customer.Phone</td></tr>
             }
         </tbody></table></div>
     }

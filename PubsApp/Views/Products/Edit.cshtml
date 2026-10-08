@@ -1,0 +1,22 @@
+@model PubsApp.Models.ProductEditViewModel
+@{
+    ViewData["Title"] = "Edit product";
+}
+
+<div class="page-heading"><div><div class="eyebrow"><a class="text-link" asp-action="Details" asp-route-id="@Model.Product.ProductId">Product detail</a> / Edit</div><h1>Edit product</h1><p>Changes are saved to the existing Products table.</p></div></div>
+
+<form asp-action="Edit" asp-route-id="@Model.Product.ProductId" method="post" class="panel edit-panel">
+    <input asp-for="Product.ProductId" type="hidden" />
+    <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+    <div class="form-grid">
+        <div class="filter-control"><label asp-for="Product.ProductName">Product name</label><input asp-for="Product.ProductName" maxlength="40" required /><span asp-validation-for="Product.ProductName" class="field-error"></span></div>
+        <div class="filter-control"><label asp-for="Product.CategoryId">Category</label><select asp-for="Product.CategoryId"><option value="">No category</option>@foreach (var category in Model.Categories){<option value="@category.CategoryId">@category.CategoryName</option>}</select></div>
+        <div class="filter-control"><label asp-for="Product.UnitPrice">Unit price</label><input asp-for="Product.UnitPrice" type="number" min="0" step="0.01" /><span asp-validation-for="Product.UnitPrice" class="field-error"></span></div>
+        <div class="filter-control"><label asp-for="Product.QuantityPerUnit">Package description</label><input asp-for="Product.QuantityPerUnit" maxlength="20" /><span asp-validation-for="Product.QuantityPerUnit" class="field-error"></span></div>
+        <div class="filter-control"><label asp-for="Product.UnitsInStock">Units in stock</label><input asp-for="Product.UnitsInStock" type="number" min="0" /><span asp-validation-for="Product.UnitsInStock" class="field-error"></span></div>
+        <div class="filter-control"><label asp-for="Product.UnitsOnOrder">Units on order</label><input asp-for="Product.UnitsOnOrder" type="number" min="0" /></div>
+        <div class="filter-control"><label asp-for="Product.ReorderLevel">Reorder level</label><input asp-for="Product.ReorderLevel" type="number" min="0" /></div>
+        <label class="check-row"><input asp-for="Product.Discontinued" /> <span>Discontinued</span></label>
+    </div>
+    <div class="form-actions"><a class="btn-quiet" asp-action="Details" asp-route-id="@Model.Product.ProductId">Cancel</a><button class="btn-primary" type="submit">Save product</button></div>
+</form>

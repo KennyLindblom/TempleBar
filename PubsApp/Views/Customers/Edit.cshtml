@@ -1,0 +1,24 @@
+@model PubsApp.Models.Customer
+@{
+    ViewData["Title"] = "Edit customer";
+}
+
+<div class="page-heading"><div><div class="eyebrow"><a class="text-link" asp-action="Details" asp-route-id="@Model.CustomerId">Customer profile</a> / Edit</div><h1>Edit customer</h1><p>Update this existing customer record.</p></div></div>
+
+<form asp-action="Edit" asp-route-id="@Model.CustomerId" method="post" class="panel edit-panel">
+    <input asp-for="CustomerId" type="hidden" />
+    <div asp-validation-summary="ModelOnly" class="validation-summary"></div>
+    <div class="form-grid">
+        <div class="filter-control"><label asp-for="CompanyName">Company name</label><input asp-for="CompanyName" maxlength="40" required /><span asp-validation-for="CompanyName" class="field-error"></span></div>
+        <div class="filter-control"><label asp-for="ContactName">Contact name</label><input asp-for="ContactName" maxlength="30" /></div>
+        <div class="filter-control"><label asp-for="ContactTitle">Contact title</label><input asp-for="ContactTitle" maxlength="30" /></div>
+        <div class="filter-control"><label asp-for="Phone">Phone</label><input asp-for="Phone" maxlength="24" /></div>
+        <div class="filter-control"><label asp-for="Fax">Fax</label><input asp-for="Fax" maxlength="24" /></div>
+        <div class="filter-control"><label asp-for="Address">Address</label><input asp-for="Address" maxlength="60" /></div>
+        <div class="filter-control"><label asp-for="City">City</label><input asp-for="City" maxlength="15" /></div>
+        <div class="filter-control"><label asp-for="Region">Region</label><input asp-for="Region" maxlength="15" /></div>
+        <div class="filter-control"><label asp-for="PostalCode">Postal code</label><input asp-for="PostalCode" maxlength="10" /></div>
+        <div class="filter-control"><label asp-for="Country">Country</label><input asp-for="Country" maxlength="15" /></div>
+    </div>
+    <div class="form-actions"><a class="btn-quiet" asp-action="Details" asp-route-id="@Model.CustomerId">Cancel</a><button class="btn-primary" type="submit">Save customer</button></div>
+</form>
